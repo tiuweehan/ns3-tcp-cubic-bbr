@@ -4,6 +4,7 @@ def build(bld):
     module = bld.create_ns3_module('applications', ['internet', 'config-store','stats'])
     module.source = [
         'model/bulk-send-application.cc',
+        'model/bulk-send-with-socket-application.cc',
         'model/onoff-application.cc',
         'model/packet-sink.cc',
         'model/udp-client.cc',
@@ -29,7 +30,7 @@ def build(bld):
     headers = bld(features='ns3header')
     headers.module = 'applications'
     headers.source = [
-        'model/bulk-send-application.h',
+        'model/bulk-send-with-socket-application.h',
         'model/onoff-application.h',
         'model/packet-sink.h',
         'model/udp-client.h',

@@ -52,7 +52,7 @@ public:
 
 protected:
   virtual void DoDispose (void);
-private:
+public:
   Ptr<TcpL4Protocol> m_tcp; //!< the associated TCP L4 protocol
 };
 

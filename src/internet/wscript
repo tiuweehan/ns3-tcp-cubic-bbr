@@ -356,6 +356,7 @@ def build(bld):
         'model/udp-socket-factory.h',
         'model/tcp-socket.h',
         'model/tcp-socket-factory.h',
+        'model/tcp-socket-factory-impl.h',
         'model/ipv4.h',
         'model/ipv4-raw-socket-factory.h',
         'model/ipv4-raw-socket-impl.h',
