@@ -272,12 +272,25 @@ int main (int argc, char *argv[])
   // Install app on all right side nodes
   uint16_t port = 50000;
   Address sinkLocalAddress (InetSocketAddress (Ipv4Address::GetAny (), port));
-  PacketSinkHelper sinkHelper ("ns3::TcpSocketFactory", sinkLocalAddress);
   ApplicationContainer sinkApp;
 
   for (uint16_t i = 0; i < nLeaf; i++)
     {
-      sinkApp.Add (sinkHelper.Install (d.GetRight (i)));
+      Ptr<Node> hostNode = d.GetRight(i);
+      Ptr<TcpSocketFactoryImpl> socketFactory = hostNode->GetObject<TcpSocketFactoryImpl>(TcpSocketFactory::GetTypeId());
+      Ptr<Socket> socket;
+      if (transport_prot == "ns3::TcpBbr") {
+        socket = socketFactory->m_tcp->CreateSocket(TcpBbr::GetTypeId());
+      } else if (transport_prot == "ns3::TcpCubic") {
+        socket = socketFactory->m_tcp->CreateSocket(TcpCubic::GetTypeId());
+      }
+      
+      Ptr<PacketSinkWithSocket> app = CreateObject<PacketSinkWithSocket>();
+      app->Setup(socket, sinkLocalAddress); 
+      
+      hostNode->AddApplication(app);
+      
+      sinkApp = ApplicationContainer(app);
     }
 
   PacketSinkHelper udpSink ("ns3::UdpSocketFactory",
@@ -286,17 +299,28 @@ int main (int argc, char *argv[])
   sinkApp.Start (Seconds (start_time));
   sinkApp.Stop (Seconds (stop_time));
 
-  BulkSendHelper ftp ("ns3::TcpSocketFactory", Address ());
-  ftp.SetAttribute ("MaxBytes", UintegerValue (int(data_mbytes * 1000000)));
-  ftp.SetAttribute ("SendSize", UintegerValue (tcp_adu_size));
 
   ApplicationContainer sourceApp;
 
   for (uint32_t i = 0; i < nLeaf; ++i)
     {
-      AddressValue remoteAddress (InetSocketAddress (d.GetRightIpv4Address (i), port));
-      ftp.SetAttribute ("Remote", remoteAddress);
-      sourceApp = ftp.Install (d.GetLeft (i));
+      Ptr<Node> hostNode = d.GetLeft(i);
+      Ptr<TcpSocketFactoryImpl> socketFactory = hostNode->GetObject<TcpSocketFactoryImpl>(TcpSocketFactory::GetTypeId());
+      Ptr<Socket> socket;
+      if (transport_prot == "ns3::TcpBbr") {
+        socket = socketFactory->m_tcp->CreateSocket(TcpBbr::GetTypeId());
+      } else if (transport_prot == "ns3::TcpCubic") {
+        socket = socketFactory->m_tcp->CreateSocket(TcpCubic::GetTypeId());
+      }
+      
+      Address peer = InetSocketAddress (d.GetRightIpv4Address (i), port);
+      Ptr<BulkSendWithSocketApplication> app = CreateObject<BulkSendWithSocketApplication>();
+      app->Setup(socket, peer, tcp_adu_size); 
+      
+      hostNode->AddApplication(app);
+      
+      sourceApp = ApplicationContainer(app);
+
       sourceApp.Start (Seconds (start_time + i * 0.1));
       sourceApp.Stop (Seconds (stop_time - 1));
     }
